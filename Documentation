@@ -1,0 +1,96 @@
+Lab Report: DoS Attack Simulation & Mitigation with pfSense
+Project Title: Demonstrating and Mitigating a Denial of Service Attack Using a pfSense Firewall
+Date: April 15, 2025
+
+1. Executive Summary
+This report documents a practical cybersecurity lab exercise focused on demonstrating the capabilities of a pfSense firewall in a controlled virtual environment. The primary objective was to simulate a Denial of Service (DoS) attack from an external "attacker" machine against a "victim" machine on an internal network and then use pfSense's rule-based filtering to mitigate the threat. The lab successfully utilized VirtualBox to create a segmented network, with Kali Linux as the attacker and Ubuntu as the victim. An ICMP flood attack was generated using hping3, and its effects were observed using Wireshark. A specific block rule was then implemented in pfSense, which immediately halted the attack, demonstrating the firewall's effectiveness in real-time threat prevention.
+
+2. Lab Objectives
+The core objectives of this hands-on lab were to:
+
+Deploy a pfSense firewall within a VirtualBox environment, configured with separate WAN and LAN network segments.
+
+Position a Kali Linux virtual machine on the WAN side to simulate an external attacker.
+
+Place an Ubuntu Desktop virtual machine on the LAN side to act as the victim host.
+
+Execute a Denial of Service (DoS) attack to flood the victim with traffic.
+
+Implement a firewall rule on pfSense to block the attack traffic and verify the mitigation.
+
+3. Lab Topology and Environment
+The entire lab was constructed within VirtualBox, using virtual machines and networks to simulate a real-world scenario.
+
+Virtualization Platform: Oracle VirtualBox 7.x
+
+Virtual Machines:
+
+Firewall: pfSense (FreeBSD-based), 2 vCPU, 2 GB RAM.
+
+Attacker: Kali Linux, 2 vCPU, 2 GB RAM.
+
+Victim: Ubuntu Desktop 22.04, 2 vCPU, 2 GB RAM.
+
+Network Configuration:
+
+WAN Segment: Configured using a VirtualBox "Bridged Adapter," placing the pfSense WAN interface and the Kali attacker machine on the host's physical network (e.g., 192.168.0.0/24).
+
+LAN Segment: Configured using a VirtualBox "Internal Network" named LabNet, creating an isolated network for internal devices (e.g., 192.168.1.0/24).
+
+IP Addressing Plan:
+
+pfSense WAN: Received a DHCP address from the host network (e.g., 192.168.0.58).
+
+pfSense LAN: Configured with a static IP (192.168.1.1) and acted as the DHCP server for the LabNet.
+
+Kali Linux (Attacker): Received a DHCP address from the host network (e.g., 192.168.0.200).
+
+Ubuntu (Victim): Received a DHCP address from the pfSense LAN (e.g., 192.168.1.100).
+
+4. Execution: Attack and Mitigation
+The lab was executed in three distinct phases: initial setup, attack simulation, and threat mitigation.
+
+4.1. Phase 1: Initial Configuration
+The pfSense firewall was installed and configured with vtnet0 as the WAN interface and vtnet1 as the LAN interface. The DHCP server was enabled on the LAN to serve the Ubuntu victim machine. To facilitate the demonstration, a temporary "Pass" rule was created on the WAN interface to allow traffic from the Kali IP to the Ubuntu IP, establishing a baseline connectivity for the attack.
+
+4.2. Phase 2: Attack Simulation
+The DoS attack was launched from the Kali Linux machine against the Ubuntu victim.
+
+Tool: hping3
+
+Command: sudo hping3 -1 --flood 192.168.1.100
+
+Attack Type: This command generated a high-volume ICMP flood (Ping flood) directed at the victim's IP address.
+
+Monitoring: Wireshark was run on the Ubuntu machine to capture traffic on its eth0 interface. Immediately after the attack was launched, Wireshark showed a massive spike in incoming ICMP packets, effectively overwhelming the victim machine.
+
+4.3. Phase 3: Mitigation and Verification
+With the attack underway, a mitigation rule was created in the pfSense web interface.
+
+Location: Firewall > Rules > WAN
+
+Action: A new rule was added to the top of the list to ensure it was processed first.
+
+Rule Configuration:
+
+Action: Block
+
+Protocol: Any (to be comprehensive)
+
+Source: The IP address of the Kali Linux machine.
+
+Destination: The IP address of the Ubuntu machine.
+
+Logging: Enabled to record packets matching the rule.
+
+Description: "Block Kali DoS"
+
+5. Results
+The results were immediate and definitive:
+
+Upon applying the new Block rule in pfSense, the flood of packets observed in Wireshark on the Ubuntu machine ceased instantly.
+
+The firewall logs in pfSense (Status > System Logs > Firewall) began showing entries for the blocked traffic, with the source IP of the Kali machine and the destination IP of the Ubuntu machine, confirming that the rule was actively identifying and dropping the malicious packets.
+
+6. Conclusion
+This lab exercise successfully demonstrated the fundamental role and effectiveness of a stateful firewall in network defense. By simulating a common DoS attack in a controlled environment, it was possible to visualize the attack's impact and prove the firewall's ability to mitigate it through the application of a single, specific rule. The key takeaway is the power of granular, rule-based traffic filtering in protecting network resources from external threats. This exercise provided valuable, practical experience in firewall configuration, network traffic analysis, and incident response.
